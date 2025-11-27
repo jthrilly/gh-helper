@@ -1,9 +1,6 @@
 #!/usr/bin/env node
 
-import { execFile } from 'child_process';
-import { promisify } from 'util';
-
-const execFileAsync = promisify(execFile);
+import { spawn } from 'child_process';
 
 const MAX_DIFF_LENGTH = 20000;
 const SYSTEM_PROMPT = `You are a commit message generator. Generate clear, concise commit messages following conventional commit format.
@@ -30,25 +27,7 @@ ${truncatedDiff}
 Return only the commit message, no other text.`;
 
   try {
-    const { stdout, stderr } = await execFileAsync('claude', [
-      '-p',
-      userPrompt,
-      '--output-format', 'text',
-      '--model', 'sonnet'
-    ], {
-      maxBuffer: 10 * 1024 * 1024,
-      timeout: 30000 // 30 second timeout
-    });
-
-    if (stderr && stderr.trim()) {
-      console.warn('Claude CLI warning:', stderr.trim());
-    }
-
-    if (!stdout || !stdout.trim()) {
-      throw new Error('No commit message generated');
-    }
-
-    return sanitizeMessage(stdout.trim());
+    return await callClaude(userPrompt);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
 
@@ -64,20 +43,103 @@ Return only the commit message, no other text.`;
   }
 }
 
+async function callClaude(prompt: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const child = spawn('claude', [
+      '-p',
+      '--output-format', 'text',
+      '--model', 'haiku'
+    ], {
+      stdio: ['pipe', 'pipe', 'pipe']
+    });
+
+    let stdout = '';
+    let stderr = '';
+
+    child.stdout.on('data', (data) => {
+      stdout += data.toString();
+    });
+
+    child.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    child.on('close', (code) => {
+      if (code !== 0) {
+        reject(new Error(`Claude CLI exited with code ${code}. stderr: ${stderr}`));
+        return;
+      }
+
+      if (stderr && stderr.trim()) {
+        console.warn('Claude CLI warning:', stderr.trim());
+      }
+
+      if (!stdout || !stdout.trim()) {
+        reject(new Error('No commit message generated'));
+        return;
+      }
+
+      resolve(sanitizeMessage(stdout.trim()));
+    });
+
+    child.on('error', (error) => {
+      reject(error);
+    });
+
+    // Send the prompt via stdin and close the input
+    child.stdin.write(prompt);
+    child.stdin.end();
+
+    // Set a timeout
+    const timeout = setTimeout(() => {
+      child.kill();
+      reject(new Error('Claude CLI timed out after 30 seconds'));
+    }, 30000);
+
+    child.on('close', () => {
+      clearTimeout(timeout);
+    });
+  });
+}
+
 export async function checkClaudeAvailability(): Promise<{ available: boolean; error?: string }> {
   try {
-    const { stdout } = await execFileAsync('claude', ['--version'], { timeout: 5000 });
-    if (stdout && stdout.includes('Claude Code')) {
-      return { available: true };
-    }
-    return { available: false, error: 'Claude Code not properly installed' };
+    return new Promise((resolve) => {
+      const child = spawn('claude', ['--version'], {
+        stdio: ['ignore', 'pipe', 'pipe']
+      });
+
+      let stdout = '';
+
+      child.stdout.on('data', (data) => {
+        stdout += data.toString();
+      });
+
+      child.on('close', (code) => {
+        if (code === 0 && stdout.includes('Claude Code')) {
+          resolve({ available: true });
+        } else {
+          resolve({ available: false, error: 'Claude Code not properly installed' });
+        }
+      });
+
+      child.on('error', (error) => {
+        const errorMessage = error.message;
+        if (errorMessage.includes('ENOENT')) {
+          resolve({ available: false, error: 'Claude Code CLI not found in PATH' });
+        } else {
+          resolve({ available: false, error: `Claude availability check failed: ${errorMessage}` });
+        }
+      });
+
+      // Set a timeout for the version check
+      setTimeout(() => {
+        child.kill();
+        resolve({ available: false, error: 'Claude version check timed out' });
+      }, 5000);
+    });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-
-    if (errorMessage.includes('ENOENT')) {
-      return { available: false, error: 'Claude Code CLI not found in PATH' };
-    }
-
     return { available: false, error: `Claude availability check failed: ${errorMessage}` };
   }
 }

@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "GitHub CLI extension for AI-assisted commit messages",
   "type": "module",
-  "main": "gh-helper.ts",
+  "main": "gh-helper",
   "bin": {
-    "gh-helper": "./gh-helper.ts"
+    "gh-helper": "./gh-helper"
   },
   "scripts": {
     "test": "node --experimental-strip-types --test test/**/*.test.ts",

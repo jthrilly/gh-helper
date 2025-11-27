@@ -1,13 +1,14 @@
 # gh-helper
 
-A GitHub CLI extension written in TypeScript that provides AI-assisted commit message generation using Claude.
+A GitHub CLI extension written in TypeScript that provides AI-assisted commit message generation using your Claude subscription via Claude Code CLI.
 
 ## Features
 
+- **Subscription-based**: Uses your existing Claude Pro/Max subscription - no API keys required
+- **Cost-effective**: Fixed monthly cost instead of per-token pricing
 - Automatically stages all changes
-- Generates commit messages using Claude AI (Haiku 3.5)
+- Generates commit messages using Claude AI (Sonnet 4.5) via Claude Code CLI
 - Interactive workflow: accept, edit, regenerate, or cancel
-- Secure API key storage using GitHub CLI extension config
 - Optional push to remote after commit
 - Comprehensive test coverage
 
@@ -15,7 +16,8 @@ A GitHub CLI extension written in TypeScript that provides AI-assisted commit me
 
 - Node.js 20.6.0 or higher (required for `--experimental-strip-types`)
 - GitHub CLI (`gh`) installed and authenticated
-- Claude API key from Anthropic
+- Claude Code CLI installed (`npm install -g @anthropic-ai/claude-code`)
+- Claude Pro or Max subscription
 
 ## Installation
 
@@ -37,7 +39,7 @@ pnpm typecheck
 
 3. Make the extension executable:
 ```bash
-chmod +x gh-helper.ts
+chmod +x gh-helper
 ```
 
 4. Install as a GitHub CLI extension:
@@ -47,13 +49,17 @@ gh extension install .
 
 ## Setup
 
-Before first use, configure your Claude API key:
+Before first use, authenticate with Claude Code:
 
 ```bash
-gh helper auth
+# Authenticate with your Claude subscription
+claude login
+
+# Verify authentication
+gh helper auth --check
 ```
 
-Enter your Claude API key when prompted. The key will be securely stored using GitHub CLI's extension config.
+This will open your browser to authenticate with your Claude Pro or Max subscription. No API keys needed!
 
 ## Usage
 
@@ -74,14 +80,17 @@ This command will:
 ### Manage authentication
 
 ```bash
-# Set or update API key
+# Check Claude Code authentication status
 gh helper auth
 
-# Check if API key is configured
+# Check if Claude Code is available and authenticated
 gh helper auth --check
 
-# Remove stored API key
-gh helper auth --clear
+# Show login instructions
+gh helper auth --login
+
+# Re-authenticate if needed
+claude login
 ```
 
 ### Get help
@@ -92,28 +101,36 @@ gh helper help
 
 ## How it works
 
-1. **Authentication**: Your Claude API key is stored securely using `gh extension config`
+1. **Authentication**: Uses Claude Code CLI with your existing Claude subscription
 2. **Diff extraction**: The tool stages all changes and extracts the diff
-3. **AI generation**: Claude Haiku 3.5 analyzes the diff and generates a conventional commit message
+3. **AI generation**: Claude Sonnet 4.5 analyzes the diff via `claude -p` command
 4. **Interactive review**: You can accept, edit, regenerate, or cancel the commit
 5. **Git operations**: Uses safe `execFile` wrappers for all git commands
 
+## Subscription Benefits
+
+- **Fixed Cost**: Your Claude Pro ($20/month) or Max ($200/month) covers unlimited commit generation
+- **No Per-Token Charges**: Unlike API usage, subscription includes all interactions
+- **Higher Limits**: Max provides 200-800 prompts every 5 hours
+- **Unified Account**: Same subscription works for web interface and CLI tools
+
 ## Security
 
-- API keys are stored securely using GitHub CLI's extension configuration system
-- Never committed to the repository
+- No API keys required - uses OAuth-based Claude Code authentication
+- Authentication handled by official Claude Code CLI
 - All git operations use `execFile` to prevent command injection
+- Subscription-based access eliminates key management risks
 
 ## Troubleshooting
 
 ### "Not a git repository" error
 Make sure you're running the command inside a git repository.
 
-### "No API key found" error
-Run `gh helper auth` to configure your Claude API key.
+### "Claude Code authentication required" error
+Run `claude login` to authenticate with your Claude subscription, then verify with `gh helper auth --check`.
 
-### "Invalid API key" error
-Verify your API key is correct and has valid permissions. You can update it with `gh helper auth`.
+### "Claude Code CLI not found" error
+Install Claude Code CLI: `npm install -g @anthropic-ai/claude-code`
 
 ### No changes to commit
 Make sure you have uncommitted changes in your repository. The tool will stage them automatically.
@@ -131,7 +148,7 @@ pnpm test:coverage
 ```
 
 The test suite includes:
-- Unit tests for all library modules (git, ai, config) written in TypeScript
+- Unit tests for all library modules (git, claude) written in TypeScript
 - Integration tests for CLI commands
 - Mock-based testing to avoid external dependencies
 - Full type safety in test code
@@ -164,4 +181,4 @@ This project uses Node.js's experimental `--experimental-strip-types` flag to ru
 
 ## License
 
-MIT# Test change for Claude integration
+MIT

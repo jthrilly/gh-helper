@@ -26,7 +26,7 @@ describe('claude module', () => {
 
         try {
           const result = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
-            mockExecFile('claude', ['-p', 'test prompt', '--output-format', 'text', '--model', 'sonnet'],
+            mockExecFile('claude', ['-p', 'test prompt', '--output-format', 'text', '--model', 'haiku'],
               { maxBuffer: 10 * 1024 * 1024, timeout: 30000 },
               (error: any, result: any) => {
                 if (error) reject(error);
@@ -67,7 +67,7 @@ describe('claude module', () => {
 
         try {
           const result = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
-            mockExecFile('claude', ['-p', 'test prompt', '--output-format', 'text', '--model', 'sonnet'],
+            mockExecFile('claude', ['-p', 'test prompt', '--output-format', 'text', '--model', 'haiku'],
               { maxBuffer: 10 * 1024 * 1024, timeout: 30000 },
               (error: any, result: any) => {
                 if (error) reject(error);

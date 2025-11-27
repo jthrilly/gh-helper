@@ -6,12 +6,19 @@ import ora from 'ora';
 import { generateCommitMessage, checkClaudeAvailability } from '../lib/claude.ts';
 import { getStagedDiff, stageAllChanges, commit, push, hasChanges, isGitRepository } from '../lib/git.ts';
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
+const question = (query: string): Promise<string> => {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
 
-const question = (query: string): Promise<string> => new Promise((resolve) => rl.question(query, resolve));
+  return new Promise((resolve) => {
+    rl.question(query, (answer) => {
+      rl.close();
+      resolve(answer);
+    });
+  });
+};
 
 export async function runCommit(): Promise<void> {
   try {
@@ -68,17 +75,17 @@ export async function runCommit(): Promise<void> {
 
         case 'e':
         case 'edit':
-          console.log(chalk.cyan('Enter your commit message (press Ctrl+D when done):'));
+          console.log(chalk.cyan('Enter your commit message (end with a line containing only "."): '));
           let editedMessage = '';
+          let editDone = false;
 
-          const editRl = readline.createInterface({
-            input: process.stdin,
-            output: process.stdout,
-            terminal: false
-          });
-
-          for await (const line of editRl) {
-            editedMessage += line + '\n';
+          while (!editDone) {
+            const line = await question('> ');
+            if (line.trim() === '.') {
+              editDone = true;
+            } else {
+              editedMessage += line + '\n';
+            }
           }
 
           commitMessage = editedMessage.trim();
@@ -134,12 +141,9 @@ export async function runCommit(): Promise<void> {
       }
     }
 
-    rl.close();
-    process.exit(0);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(chalk.red(`Error: ${errorMessage}`));
-    rl.close();
     process.exit(1);
   }
 }
