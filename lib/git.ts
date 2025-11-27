@@ -8,7 +8,7 @@ const execFileAsync = promisify(execFile);
 export async function getStagedDiff(): Promise<string> {
   try {
     const { stdout } = await execFileAsync('git', ['diff', '--cached'], {
-      maxBuffer: 10 * 1024 * 1024
+      maxBuffer: 50 * 1024 * 1024 // 50MB buffer
     });
     return stdout.trim();
   } catch (error) {
