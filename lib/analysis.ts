@@ -127,17 +127,20 @@ ${file.oldPath ? `Old path: ${file.oldPath}` : ''}
 Diff:
 ${fullDiff}
 
+**IMPORTANT: Look for comments in the diff (lines starting with + followed by //, /*, #, <!-- etc.)**
+Comments often contain crucial developer intent and reasoning that should be incorporated into your analysis.
+
 Respond with exactly this format:
-SUMMARY: [Detailed description of what changed, including specific functions, classes, or components affected, the nature of the change, and its purpose]
+SUMMARY: [Detailed description of what changed, including specific functions, classes, or components affected, the nature of the change, and its purpose. INCLUDE any developer intent revealed in comments.]
 IMPACT: [major/minor/trivial - based on scope and importance]
-DETAILS: [Additional context about implementation approach, effects on other parts of the system, and any notable patterns or considerations]
+DETAILS: [Additional context about implementation approach, effects on other parts of the system, any notable patterns or considerations, and QUOTE any relevant comments that explain developer reasoning, TODOs, or important context.]
 
 Guidelines for IMPACT:
 - major: New features, breaking changes, significant refactoring
 - minor: Bug fixes, small enhancements, documentation updates
 - trivial: Formatting, comments, minor config tweaks
 
-Be comprehensive in SUMMARY and DETAILS - provide enough information for someone to understand the change without seeing the diff.`;
+Be comprehensive in SUMMARY and DETAILS - provide enough information for someone to understand the change without seeing the diff. **Pay special attention to any added or modified comments as they often directly reveal developer intent.**`;
 
   return { prompt, systemPrompt };
 }

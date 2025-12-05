@@ -157,13 +157,22 @@ If needed, add a blank line and then more detailed explanation.`,
 - API changes or new interfaces
 - Error handling improvements
 - Security considerations
+- **Comments added/modified** - these often reveal developer intent, reasoning, and context
+
+**IMPORTANT: Pay special attention to any comments in the diff (lines starting with +// or +/* or similar).**
+Comments often directly describe:
+- Developer intent and reasoning
+- Why certain approaches were chosen
+- Known limitations or future improvements
+- Context about complex logic or business requirements
+- TODOs, FIXMEs, or warnings about edge cases
 
 For each change, explain:
 1. WHAT was changed (specific functions, classes, logic)
-2. WHY it was changed (purpose, problem solved)
+2. WHY it was changed (purpose, problem solved) - **USE COMMENTS TO UNDERSTAND INTENT**
 3. HOW it affects the system (impact, side effects)
 
-Be comprehensive and specific about functionality that was added, modified, or removed. Include details about implementation approaches and any notable patterns used.`,
+Be comprehensive and specific about functionality that was added, modified, or removed. Include details about implementation approaches and any notable patterns used. **Quote relevant comments that explain developer reasoning.**`,
 
   testAnalysis: `You are a test code analyzer. Analyze the provided test diff and provide a DETAILED summary covering:
 - What specific functionality is being tested and how
@@ -174,13 +183,22 @@ Be comprehensive and specific about functionality that was added, modified, or r
 - Assertion improvements and what they validate
 - Test data or fixture changes
 - Integration vs unit test considerations
+- **Test comments and descriptions** - these often explain test intent and scenarios
+
+**IMPORTANT: Pay special attention to any comments in test code (lines starting with +// or +/* or similar).**
+Test comments often reveal:
+- Test scenarios and expected behaviors being validated
+- Reasoning for specific test approaches or data
+- Known edge cases or regression scenarios
+- Setup/teardown requirements and why they're needed
+- Complex assertion logic or timing considerations
 
 For each test change, explain:
 1. WHAT is being tested (specific behaviors, edge cases, error conditions)
-2. WHY the test was added/changed (coverage gaps, bugs found, requirements)
+2. WHY the test was added/changed (coverage gaps, bugs found, requirements) - **USE COMMENTS TO UNDERSTAND TEST INTENT**
 3. HOW the test validates the functionality (approach, assertions, scenarios)
 
-Include details about testing patterns, methodologies used, and the scope of coverage provided.`,
+Include details about testing patterns, methodologies used, and the scope of coverage provided. **Quote relevant test comments that explain scenarios or reasoning.**`,
 
   documentationAnalysis: `You are a documentation analyzer. Analyze the provided documentation diff and provide a DETAILED summary covering:
 - What specific information was added, updated, or removed and its purpose
@@ -192,13 +210,22 @@ Include details about testing patterns, methodologies used, and the scope of cov
 - Installation or setup instruction changes
 - Troubleshooting information updates
 - Cross-references and link updates
+- **Comments in documentation code examples** - these explain usage and context
+
+**IMPORTANT: Pay attention to any comments in code examples or configuration snippets.**
+Documentation comments often provide:
+- Usage context and when to apply certain approaches
+- Important warnings or caveats
+- Alternative approaches and trade-offs
+- Real-world examples and common patterns
+- Configuration explanations and parameter purposes
 
 For each documentation change, explain:
 1. WHAT content was modified (sections, examples, instructions)
-2. WHY the change was made (clarity, accuracy, completeness)
+2. WHY the change was made (clarity, accuracy, completeness) - **USE INLINE COMMENTS FOR CONTEXT**
 3. HOW it helps users (better understanding, easier setup, clearer guidance)
 
-Include details about the audience impact and informational value of the changes.`,
+Include details about the audience impact and informational value of the changes. **Quote relevant comments that provide important context or warnings.**`,
 
   configurationAnalysis: `You are a configuration file analyzer. Analyze the provided config diff and provide a DETAILED summary covering:
 - What specific settings or behaviors changed and their effects
@@ -210,13 +237,23 @@ Include details about the audience impact and informational value of the changes
 - Feature flags or toggles added/modified
 - Database or service connection changes
 - Logging, monitoring, or debugging configuration updates
+- **Comments in configuration files** - these often explain setting purposes and constraints
+
+**IMPORTANT: Pay special attention to any comments in configuration files (lines starting with +# or +// or +<!-- depending on format).**
+Configuration comments often explain:
+- Purpose and intended use of settings
+- Valid value ranges and formats
+- Performance or security implications
+- Environment-specific considerations
+- Deprecated options and migration paths
+- Dependencies between different configuration options
 
 For each configuration change, explain:
 1. WHAT setting was modified (specific keys, values, sections)
-2. WHY the change was made (new requirements, optimization, fixes)
+2. WHY the change was made (new requirements, optimization, fixes) - **USE COMMENTS TO UNDERSTAND REASONING**
 3. HOW it affects the system (runtime behavior, performance, compatibility)
 
-Include details about the functional impact, deployment considerations, and any breaking changes introduced.`
+Include details about the functional impact, deployment considerations, and any breaking changes introduced. **Quote relevant comments that explain setting purposes or important considerations.**`
 };
 
 export async function generateCommitMessage(diff: string): Promise<string> {
