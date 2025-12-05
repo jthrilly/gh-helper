@@ -67,7 +67,7 @@ ollama pull llama3:latest      # For commit message generation
 ollama pull llama3.2:latest    # For faster file analysis
 
 # Verify setup
-gh helper auth --check
+gh helper status
 ```
 
 No API keys or subscriptions needed - everything runs locally!
@@ -96,7 +96,7 @@ This command will:
 
 ```bash
 # Check if Ollama and required models are available
-gh helper auth --check
+gh helper status
 ```
 
 ### Get help

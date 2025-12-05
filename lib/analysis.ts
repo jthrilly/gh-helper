@@ -8,6 +8,7 @@ export interface FileAnalysis {
   file: FileChange;
   category: FileCategory;
   summary: string;
+  details?: string;
   impact: 'major' | 'minor' | 'trivial';
 }
 
@@ -95,9 +96,8 @@ async function analyzeFileChange(
 }
 
 function createAnalysisPrompt(file: FileChange, category: FileCategory, diff: string): { prompt: string; systemPrompt: string } {
-  const truncatedDiff = diff.length > 5000
-    ? diff.substring(0, 5000) + '\n... (diff truncated)'
-    : diff;
+  // No truncation - send full diff for comprehensive analysis
+  const fullDiff = diff;
 
   // Select appropriate system prompt based on file category
   let systemPrompt: string;
@@ -125,16 +125,19 @@ Status: ${file.status}
 ${file.oldPath ? `Old path: ${file.oldPath}` : ''}
 
 Diff:
-${truncatedDiff}
+${fullDiff}
 
 Respond with exactly this format:
-SUMMARY: [Brief description of what changed]
+SUMMARY: [Detailed description of what changed, including specific functions, classes, or components affected, the nature of the change, and its purpose]
 IMPACT: [major/minor/trivial - based on scope and importance]
+DETAILS: [Additional context about implementation approach, effects on other parts of the system, and any notable patterns or considerations]
 
 Guidelines for IMPACT:
 - major: New features, breaking changes, significant refactoring
-- minor: Bug fixes, small enhancements, documentation updates  
-- trivial: Formatting, comments, minor config tweaks`;
+- minor: Bug fixes, small enhancements, documentation updates
+- trivial: Formatting, comments, minor config tweaks
+
+Be comprehensive in SUMMARY and DETAILS - provide enough information for someone to understand the change without seeing the diff.`;
 
   return { prompt, systemPrompt };
 }
@@ -142,6 +145,7 @@ Guidelines for IMPACT:
 function parseAnalysisResponse(file: FileChange, category: FileCategory, response: string): FileAnalysis {
   const lines = response.split('\n');
   let summary = '';
+  let details = '';
   let impact: 'major' | 'minor' | 'trivial' = 'minor';
 
   for (const line of lines) {
@@ -152,6 +156,8 @@ function parseAnalysisResponse(file: FileChange, category: FileCategory, respons
       if (impactStr === 'major' || impactStr === 'minor' || impactStr === 'trivial') {
         impact = impactStr;
       }
+    } else if (line.startsWith('DETAILS:')) {
+      details = line.replace('DETAILS:', '').trim();
     }
   }
 
@@ -159,7 +165,7 @@ function parseAnalysisResponse(file: FileChange, category: FileCategory, respons
     summary = createFallbackSummary(file, category);
   }
 
-  return { file, category, summary, impact };
+  return { file, category, summary, details: details || undefined, impact };
 }
 
 function createFallbackAnalysis(file: FileChange, category: FileCategory, diff: string): FileAnalysis {
