@@ -1,13 +1,15 @@
 # gh-helper
 
-A GitHub CLI extension written in TypeScript that provides AI-assisted commit message generation using your Claude subscription via Claude Code CLI.
+A GitHub CLI extension written in TypeScript that provides AI-assisted commit message generation using local Ollama models with intelligent file change analysis.
 
 ## Features
 
-- **Subscription-based**: Uses your existing Claude Pro/Max subscription - no API keys required
-- **Cost-effective**: Fixed monthly cost instead of per-token pricing
+- **Local AI Processing**: Uses local Ollama models - no cloud dependencies or API costs
+- **Intelligent File Analysis**: Analyzes file types and provides context-aware commit messages
+- **Specialized Prompts**: Different analysis prompts for code, tests, documentation, and configuration files
+- **Sequential Processing**: Avoids overwhelming the system with too many concurrent requests
 - Automatically stages all changes
-- Generates commit messages using Claude AI (Sonnet 4.5) via Claude Code CLI
+- Generates commit messages using local LLM with file change context
 - Interactive workflow: accept, edit, regenerate, or cancel
 - Optional push to remote after commit
 - Comprehensive test coverage
@@ -16,8 +18,8 @@ A GitHub CLI extension written in TypeScript that provides AI-assisted commit me
 
 - Node.js 20.6.0 or higher (required for `--experimental-strip-types`)
 - GitHub CLI (`gh`) installed and authenticated
-- Claude Code CLI installed (`npm install -g @anthropic-ai/claude-code`)
-- Claude Pro or Max subscription
+- Ollama installed and running locally
+- A compatible language model (e.g., `llama3:latest`)
 
 ## Installation
 
@@ -49,17 +51,20 @@ gh extension install .
 
 ## Setup
 
-Before first use, authenticate with Claude Code:
+Before first use, ensure Ollama is running with a language model:
 
 ```bash
-# Authenticate with your Claude subscription
-claude login
+# Install and start Ollama (if not already done)
+# Visit: https://ollama.com
 
-# Verify authentication
+# Pull a language model
+ollama pull llama3:latest
+
+# Verify setup
 gh helper auth --check
 ```
 
-This will open your browser to authenticate with your Claude Pro or Max subscription. No API keys needed!
+No API keys or subscriptions needed - everything runs locally!
 
 ## Usage
 

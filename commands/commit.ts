@@ -3,8 +3,9 @@
 import readline from 'readline';
 import chalk from 'chalk';
 import ora from 'ora';
-import { generateCommitMessage, checkClaudeAvailability } from '../lib/claude.ts';
-import { getStagedDiff, stageAllChanges, commit, push, hasChanges, isGitRepository } from '../lib/git.ts';
+import { generateCommitMessageFromAnalysis, checkOllamaAvailability } from '../lib/ollama.ts';
+import { stageAllChanges, commit, push, hasChanges, isGitRepository, getStatusChanges } from '../lib/git.ts';
+import { analyzeChanges } from '../lib/analysis.ts';
 
 const question = (query: string): Promise<string> => {
   const rl = readline.createInterface({
@@ -27,11 +28,11 @@ export async function runCommit(): Promise<void> {
       process.exit(1);
     }
 
-    const claudeCheck = await checkClaudeAvailability();
-    if (!claudeCheck.available) {
-      console.error(chalk.red(`Error: ${claudeCheck.error}`));
-      console.error(chalk.yellow('Please ensure Claude Code is installed and authenticated.'));
-      console.error(chalk.gray('Run: claude login'));
+    const ollamaCheck = await checkOllamaAvailability();
+    if (!ollamaCheck.available) {
+      console.error(chalk.red(`Error: ${ollamaCheck.error}`));
+      console.error(chalk.yellow('Please ensure Ollama is running and has the required model.'));
+      console.error(chalk.gray('Install model: ollama pull llama3:latest'));
       process.exit(1);
     }
 
@@ -45,21 +46,48 @@ export async function runCommit(): Promise<void> {
     spinner.text = 'Staging all changes...';
     await stageAllChanges();
 
-    spinner.text = 'Getting staged diff...';
-    const diff = await getStagedDiff();
+    spinner.text = 'Analyzing changes...';
+    const fileChanges = await getStatusChanges();
 
-    if (!diff) {
+    if (fileChanges.length === 0) {
       spinner.fail('No staged changes found');
       process.exit(0);
     }
 
+    spinner.text = `Analyzing ${fileChanges.length} files...`;
+
+    // Use progress callback to update spinner with current file being analyzed
+    const analysisResult = await analyzeChanges(fileChanges, (current, total, fileName) => {
+      const shortFileName = fileName.length > 30
+        ? '...' + fileName.slice(-27)
+        : fileName;
+      spinner.text = `Analyzing file ${current}/${total}: ${shortFileName}`;
+    });
+
     spinner.text = 'Generating commit message...';
-    let commitMessage = await generateCommitMessage(diff);
+    let commitMessage = await generateCommitMessageFromAnalysis(analysisResult);
     spinner.succeed('Generated commit message');
+
+    // Show analysis summary
+    console.log(chalk.cyan('\n--- Change Analysis ---'));
+    console.log(chalk.gray(`Overall scope: ${analysisResult.overallScope}`));
+    console.log(chalk.gray(`Suggested type: ${analysisResult.suggestedCommitType}`));
+    
+    const majorChanges = analysisResult.fileAnalyses.filter(a => a.impact === 'major');
+    const codeChanges = analysisResult.fileAnalyses.filter(a => a.category.type === 'code');
+    
+    if (majorChanges.length > 0) {
+      console.log(chalk.yellow(`Major changes in ${majorChanges.length} files`));
+    }
+    if (codeChanges.length > 0) {
+      console.log(chalk.blue(`Code changes in ${codeChanges.length} files`));
+    }
+    
+    console.log(chalk.cyan('--- End Analysis ---\n'));
 
     let done = false;
     while (!done) {
-      console.log(chalk.cyan('\n--- Proposed Commit Message ---'));
+      console.log(chalk.cyan('--- Proposed Commit Message ---'));
       console.log(commitMessage);
       console.log(chalk.cyan('--- End Message ---\n'));
 
@@ -100,7 +128,7 @@ export async function runCommit(): Promise<void> {
         case 'regenerate':
           const regenSpinner = ora('Regenerating commit message...').start();
           try {
-            commitMessage = await generateCommitMessage(diff);
+            commitMessage = await generateCommitMessageFromAnalysis(analysisResult);
             regenSpinner.succeed('Regenerated commit message');
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
